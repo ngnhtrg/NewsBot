@@ -2,7 +2,7 @@
 
 #### Usage
 This bot can get data from site [https://www.rbc.ru/story/](https://www.rbc.ru/story/)
-and answer for some request
+and answer for some requests
 
 #### Commands:
 ```
