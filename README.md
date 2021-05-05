@@ -1,6 +1,7 @@
 ### News Bot
 
 #### Usage
+Username: @ngnhtrg_news_bot
 This bot can get data from site [https://www.rbc.ru/story/](https://www.rbc.ru/story/)
 and answer for some requests
 
@@ -20,6 +21,13 @@ and answer for some requests
 # Clone repository
 git clone https://github.com/ngnhtrg/NewsBot.git
 cd NewsBot/
+git branch dev
+git pill origin dev
+pip install -r requirements.txt
+# Parse site
+python3 db.py
+# Run bot
+python3 bot.py
 ```
 
 Here are some screen shots:
