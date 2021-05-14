@@ -40,4 +40,3 @@ jobs:
           flake8 parse.py
           flake8 db.py
           flake8 bot.py
-          python3 db.py
