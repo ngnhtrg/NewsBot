@@ -23,7 +23,7 @@ and answer for some requests
 git clone https://github.com/ngnhtrg/NewsBot.git
 cd NewsBot/
 git branch dev
-git pill origin dev
+git pull origin dev
 pip install -r requirements.txt
 # Parse site
 python3 db.py
