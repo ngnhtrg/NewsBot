@@ -1,6 +1,7 @@
 import logging
 import sqlite3
 import re
+from collections import defaultdict
 from telegram.ext import Updater, CommandHandler
 
 
@@ -15,10 +16,10 @@ logger = logging.getLogger(__name__)
 
 def get_parts_of_text(text, character):
     """
-        If text is too long, exceed MAX_MESSAGE_LENGTH,
-        we have to separate into small texts (part)
-        :text: text to be handled
-        :character: character used to separate text
+    If text is too long, exceed MAX_MESSAGE_LENGTH,
+    we have to separate into small texts (part)
+    :param text: text to be handled
+    :param character: character used to separate text
     """
     _text = text
     if len(text) > MAX_MESSAGE_LENGTH:
@@ -35,6 +36,11 @@ def get_parts_of_text(text, character):
 
 
 def select_new_docs(conn, number_of_docs):
+    """
+    Select a given number of newest documents
+    :param conn: A SQLite database connection
+    :param number_of_docs: number of documents to select
+    """
     query = '''SELECT Heading, LastUpdateTime
                FROM doc
                ORDER BY LastUpdateTime DESC
@@ -46,6 +52,11 @@ def select_new_docs(conn, number_of_docs):
 
 
 def select_new_topics(conn, number_of_topics):
+    """
+    Select a given number of newest topics
+    :param conn: A SQLite database connection
+    :param number_of_topics: number of topics to select
+    """
     query = '''SELECT name
                FROM topic
                ORDER BY LastUpdateTime DESC
@@ -57,6 +68,13 @@ def select_new_topics(conn, number_of_topics):
 
 
 def select_new_doc_from_topic(conn, topic_name, number_of_docs):
+    """
+    Select a given number of newest topics from the topic
+    :param conn: A SQLite database connection
+    :param topic_name: topic to select
+    :param number_of_docs: number of topics to select
+    """
+
     query = '''SELECT row.articles
                FROM topic row
                WHERE row.name = ?
@@ -69,6 +87,12 @@ def select_new_doc_from_topic(conn, topic_name, number_of_docs):
 
 
 def select_doc(conn, doc_title):
+    """
+    Get a document by the given title
+    :param conn: A SQLite database connection
+    :param doc_title: title of document
+    """
+
     query = '''SELECT row.text
                FROM doc row
                WHERE row.Heading = ?
@@ -80,6 +104,13 @@ def select_doc(conn, doc_title):
 
 
 def select_topic(conn, topic_name):
+    """
+    Get a topic by the given title
+    :param conn: A SQLite database connection
+    :param topic_name: name of topic
+    return description of topic
+    """
+
     query = '''SELECT row.description
                FROM topic row
                WHERE row.name = ?
@@ -91,6 +122,14 @@ def select_topic(conn, topic_name):
 
 
 def select_words_best_describe(conn, topic_name, number_of_words):
+    """
+    Select words that best describe the topic
+    :param conn: A SQLite database connection
+    :param topic_name: name of topic
+    :param number_of_words: number of words to select
+    return: list of words
+    """
+
     query = '''SELECT row.articles
            FROM topic row
            WHERE row.name = ?
@@ -99,7 +138,7 @@ def select_words_best_describe(conn, topic_name, number_of_words):
     cur.execute(query, (topic_name,))
     docs = cur.fetchall()[0][0]
     list_of_docs = docs.split('\n')
-    dic = dict()
+    dic = defaultdict(int)
     for item in list_of_docs:
         text = select_doc(conn, item)
         text = re.split(r', | ', text)
@@ -107,11 +146,7 @@ def select_words_best_describe(conn, topic_name, number_of_words):
             word = ''.join(ch for ch in word if ch.isalnum())
             if len(word) <= 3:
                 continue
-            if word not in dic:
-                dic[word] = 1
-            else:
-                dic[word] += 1
-
+            dic[word] += 1
     dic = sorted(dic.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)
     key_word = []
     for index in range(number_of_words):
@@ -120,6 +155,13 @@ def select_words_best_describe(conn, topic_name, number_of_words):
 
 
 def get_distribution_from_doc(conn, doc_title):
+    """
+    Get frequency and length of words distribution of given document
+    :param conn: A SQLite database connection
+    :param doc_title: title of document
+    return: frequency distribution, length distribution (type dict)
+    """
+
     text = select_doc(conn, doc_title)
     text = re.split(r', | ', text)
     freq_dic = dict()
@@ -146,6 +188,16 @@ def get_distribution_from_doc(conn, doc_title):
 
 
 def get_discribe_from_topic(conn, topic_name):
+    """
+    Get informations from topic
+    :param conn: A SQLite database connection
+    :param topic_name: name of topic
+    return: number of documents in topic
+            average of length of documents
+            frequency distribution
+            length distribution
+    """
+
     query = '''SELECT row.articles
                FROM topic row
                WHERE row.name = ?
@@ -216,9 +268,7 @@ These are what I can do:
 
 
 def new_docs(update, context):
-    """ Показать N самых свежих новостей
-        N = int(context.args[0])
-    """
+    """Show N latest news"""
     try:
         number1 = int(context.args[0])
         with sqlite3.connect('data.db') as conn:
@@ -226,8 +276,7 @@ def new_docs(update, context):
             texts = ''
             index = 1
             for item in rows:
-                texts += str(index) + '.'
-                texts += ' [' + item[1][:-3] + '] ' + item[0] + '\n'
+                texts += '{}. [{}] {}\n'.format(index, item[1][:-3], item[0])
                 index += 1
             update.message.reply_text(texts)
     except (IndexError, ValueError):
@@ -235,7 +284,7 @@ def new_docs(update, context):
 
 
 def new_topics(update, context):
-    """ Показать N самых свежих тем"""
+    """Show N latest topics"""
     try:
         number1 = int(context.args[0])
         with sqlite3.connect('data.db') as conn:
@@ -243,7 +292,7 @@ def new_topics(update, context):
             texts = ''
             index = 1
             for item in rows:
-                texts += str(index) + '. ' + item[0] + '\n'
+                texts += '{}. {}\n'.format(index, item[0])
                 index += 1
             update.message.reply_text(texts)
     except (IndexError, ValueError):
@@ -251,16 +300,18 @@ def new_topics(update, context):
 
 
 def topic(update, context):
+    """
+    Show topic description and headlines
+    of the 5 most recent news in this topic
+    """
     try:
         topic_name = ' '.join(list(context.args))
         with sqlite3.connect('data.db') as conn:
             descript = select_topic(conn, topic_name)
             rows = select_new_doc_from_topic(conn, topic_name, 5)
             texts = 'Заголовки 5 самых свежих новостей в этой теме:\n'
-            index = 1
-            for item in rows:
-                texts += str(index) + '. ' + item + '\n'
-                index += 1
+            for index, value in enumerate(rows, start=1):
+                texts += '{}. {}\n'.format(index, value)
             update.message.reply_text(descript + '\n' + texts)
 
     except (IndexError, ValueError):
@@ -268,6 +319,7 @@ def topic(update, context):
 
 
 def doc(update, context):
+    """Show the text of the document with the given title"""
     try:
         doc_title = ' '.join(list(context.args))
         with sqlite3.connect('data.db') as conn:
@@ -284,6 +336,7 @@ def doc(update, context):
 
 
 def words(update, context):
+    """Show 5 words that best describe the topic"""
     try:
         topic_name = ' '.join(list(context.args))
         text = '5 слов, лучше всего характеризующих тему:\n'
@@ -298,6 +351,7 @@ def words(update, context):
 
 
 def describe_doc(update, context):
+    """Display document statistics"""
     try:
         doc_title = ' '.join(list(context.args))
         with sqlite3.connect('data.db') as conn:
@@ -305,16 +359,18 @@ def describe_doc(update, context):
             freq_distr = 'Распределение частот слов:\n'
             len_distr = 'Распределение длин слов:\n'
             for (key, value) in freq_dic:
-                freq_distr += key + ': ' + str(value) + ', '
+                freq_distr += '{}: {}'.format(key, value)
             for (key, value) in len_dic:
-                len_distr += key + ': ' + str(value) + ', '
-            text = doc_title + '\n' + freq_distr[:-2] + '\n' + len_distr[:-2]
+                len_distr += '{}: {}'.format(key, value)
+            text = '{}\n{}\n{}'.format(
+                                doc_title, freq_distr[:-2], len_distr[:-2])
             update.message.reply_text(text)
     except (IndexError, ValueError):
         update.message.reply_text('Input Error!')
 
 
 def describe_topic(update, context):
+    """Display statistics on a topic"""
     try:
         topic_name = ' '.join(list(context.args))
         with sqlite3.connect('data.db') as conn:
@@ -323,16 +379,17 @@ def describe_topic(update, context):
             freq_distr = 'Распределение частот слов:\n'
             len_distr = 'Распределение длин слов:\n'
             for (key, value) in freq_dic:
-                freq_distr += key + ': ' + str(value) + ', '
+                freq_distr += '{}: {}, '.format(key, value)
             for (key, value) in len_dic:
-                len_distr += key + ': ' + str(value) + ', '
+                len_distr += '{}: {}, '.format(key, value)
             number_docs_str = 'Количество документов в теме: '
-            number_docs_str += str(number_docs) + '\n'
+            number_docs_str += '{}\n'.format(number_docs)
             average_of_len_str = 'Cредняя длина документов: '
-            average_of_len_str += str(average_of_len) + '\n'
-            text = topic_name + '\n'
-            text += number_docs_str + average_of_len_str
-            text += freq_distr[:-2] + '\n' + len_distr[:-2] + '\n'
+            average_of_len_str += '{}\n'.format(average_of_len)
+            text = '{}\n{}{}'.format(
+                                topic_name, number_docs_str, number_docs_str)
+            text += '{}\n{}\n'.format(freq_distr[:-2], len_distr[:-2])
+
             if len(text) > MAX_MESSAGE_LENGTH:
                 parts = get_parts_of_text(text, ',')
                 for part in parts:

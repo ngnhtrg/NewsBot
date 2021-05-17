@@ -6,6 +6,11 @@ conn = sqlite3.connect('data.db')
 
 
 def create_tables(cur, conn):
+    """
+    Create a new tables topic and doc in an SQLite database
+    :param conn: A SQLite database connection
+    :param cur: A Cursor instance
+    """
     # Delete old tables, if there are.
     cur.execute('DROP TABLE IF EXISTS topic')
     cur.execute('DROP TABLE IF EXISTS doc')
@@ -35,6 +40,10 @@ def create_tables(cur, conn):
 
 
 def add_topics(cur):
+    """
+    Insert data into table topic
+    :param cur: A Cursor instance
+    """
     for item in parse.topics:
         cur.execute('''
             INSERT INTO topic
@@ -44,6 +53,10 @@ def add_topics(cur):
 
 
 def add_docs(cur):
+    """
+    Insert data to table doc
+    :param cur: A Cursor instance
+    """
     for item in parse.articles:
         cur.execute('''
             INSERT INTO doc
