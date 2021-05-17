@@ -164,20 +164,14 @@ def get_distribution_from_doc(conn, doc_title):
 
     text = select_doc(conn, doc_title)
     text = re.split(r', | ', text)
-    freq_dic = dict()
-    len_dic = dict()
+    freq_dic = defaultdict(int)
+    len_dic = defaultdict(int)
     for word in text:
         word = ''.join(ch for ch in word if ch.isalnum())
         if len(word) == 0:
             continue
-        if str(len(word)) not in len_dic:
-            len_dic[str(len(word))] = 1
-        else:
-            len_dic[str(len(word))] += 1
-        if word not in freq_dic:
-            freq_dic[word] = 1
-        else:
-            freq_dic[word] += 1
+        len_dic[str(len(word))] += 1
+        freq_dic[word] += 1
 
     freq_dic = sorted(
         freq_dic.items(), key=lambda kv: (kv[1], kv[0]), reverse=True)
@@ -209,23 +203,17 @@ def get_discribe_from_topic(conn, topic_name):
     articles = re.split(r'\n', articles)
     number_docs = len(articles)
     sum_of_len_docs = 0
-    freq_dic = dict()
-    len_dic = dict()
+    freq_dic = defaultdict(int)
+    len_dic = defaultdict(int)
     for item in articles:
         text = select_doc(conn, item)
         sum_of_len_docs += len(text)
         doc_freq_dic, doc_len_dic = get_distribution_from_doc(conn, item)
         for (key, value) in doc_freq_dic:
-            if key not in freq_dic:
-                freq_dic[key] = value
-            else:
-                freq_dic[key] += value
+            freq_dic[key] += value
 
         for (key, value) in doc_len_dic:
-            if key not in len_dic:
-                len_dic[key] = value
-            else:
-                len_dic[key] += value
+            len_dic[key] += value
 
     average_of_len = sum_of_len_docs / number_docs
 
