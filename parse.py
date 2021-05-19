@@ -10,6 +10,11 @@ date = datetime(year=2021, month=5, day=4, hour=20, minute=55)
 
 
 def get_site_from_url(url):
+    """
+    Open the URL url, read and decode the response
+    :param url: URL address (type std::string)
+    return string from url
+    """
     response = urllib.request.urlopen(url)
     HTML = response.read()
     HTML = HTML.decode('utf-8')
@@ -17,25 +22,47 @@ def get_site_from_url(url):
 
 
 def convert_to_time(time_str):
+    """
+    Convert string time to datetime
+    3 cases: [29 апр 2018, 20:00], [16 мая, 16:22], [10:43]
+        case 1: convert to datatime
+        case 2: add year = datetime.now().year
+                then convert to datatime
+        case 3: add year = datetime.now().year
+                    month = datetime.now().month
+                    day = datetime.now().day
+                then convert to datatime
+    """
+    print(time_str)
     time = re.split(r' |, |:', time_str)
+    # true for all cases
     hour = int(time[-2])
     minute = int(time[-1])
 
     if len(time) != 2:
+        # case 1 or case 2
         month = int(months[time[1]])
         day = int(time[0])
     else:
+        # case 3
         month = datetime.now().month
         day = datetime.now().day
 
     if len(time) == 5:
+        # case 1
         year = int(time[2])
     else:
+        # case 2 or case 3
         year = datetime.now().year
     return datetime(year, month, day, hour, minute)
 
 
 def get_text(HTML):
+    """
+    Get text from HTML
+    :param HTML: unicode url
+    return: string
+    """
     string = re.findall(r'<p.*?>(.*?)<\/p>', HTML)
     _text = ''
     for item in string:
@@ -46,6 +73,9 @@ def get_text(HTML):
 
 
 def get_tags(HTML):
+    """
+    Find all tags on HTML
+    """
     soup = BeautifulSoup(HTML, "html.parser")
     tags = set([tag.name for tag in soup.find_all()])
     return json.dumps(list(tags))
