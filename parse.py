@@ -30,7 +30,6 @@ def convert_to_time(time_str):
                     day = datetime.now().day
                 then convert to datatime
     """
-    print(time_str)
     time = re.split(r' |, |:', time_str)
     # true for all cases
     hour = int(time[-2])
