@@ -6,8 +6,6 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 
 
-
-
 def get_site_from_url(url):
     """
     Open the URL url, read and decode the response
