@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 
 
-date = datetime(year=2021, month=5, day=4, hour=20, minute=55)
 
 
 def get_site_from_url(url):
